@@ -1,5 +1,7 @@
 # ppcg-qc-from-sanger
 
+[![Docker Repository on Quay](https://quay.io/repository/wtsicgp/ppcg-qc-from-sanger/status "Docker Repository on Quay")](https://quay.io/repository/wtsicgp/ppcg-qc-from-sanger)
+
 The tools is used to extract PPCG defined QC metrics from Sanger variant calling pipeline results.
 
 ## Inputs
