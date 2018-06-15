@@ -1,0 +1,3 @@
+Sample name	Sample Type	Depth	Fraction of mapped reads	Insert size	Insert size sd	r1 GC content	r2 GC content	Fraction of duplicated reads	Fraction of mis-matched pairs	Contamination	Gender	Fraction of matched gender	Fraction of matched genotype	Normal contamination
+tumour_sample	Tumour	64.77482384370064	0.9824273165144373	317.9052	66.01700000000001	0.402118666194444	0.40289469955814106	0.04021243115052472	0.020564544837058163	0.00010	XY	1	1	0.766671006086298
+normal_sample	Normal	44.365838558669395	0.9878175087558873	314.84233333333333	65.20033333333332	0.4002446402215151	0.40057860376888255	0.027359730221365522	0.015026566157314125	0.00000	NA	NA	NA	NA
