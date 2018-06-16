@@ -2,11 +2,11 @@
 
 [![Docker Repository on Quay](https://quay.io/repository/wtsicgp/ppcg-qc-from-sanger/status "Docker Repository on Quay")](https://quay.io/repository/wtsicgp/ppcg-qc-from-sanger)
 
-The tools is used to extract PPCG defined QC metrics from Sanger variant calling pipeline results.
+The tool is used to extract PPCG defined QC metrics from Sanger variant calling pipeline results.
 
 ## Inputs
 
-### tumour and normal sample bas files
+### tumour and normal sample BASfiles
 
   BAS file is one of the output of Sanger mapping pileline (cgpmap), which contains metrics collected during mapping and it has `.bas` suffix.
 
@@ -16,11 +16,13 @@ The tools is used to extract PPCG defined QC metrics from Sanger variant calling
 
 ### Genome size
 
-  It's required for calculating sequencing depth. Default to the sum of chromosome lengths in GRCh37.
+  It's required for calculating sequencing depth. Default to the sum of length of GRCh37 chromosomes.
 
 ## Outputs
 
-### File: ppcg_metrics_from_cgpwgs.txt
+Output of the tool is a tar file containing the following files:
+
+### {tumour_sample_name}_vs_{normal_sample_name}.ppcg_sanger_metrics.txt
 
 A tsv file containing the following columns:
 
@@ -38,11 +40,11 @@ A tsv file containing the following columns:
 1. **Gender** (tumour only): deduced gender from genotypes of 4 SNPs on sex chromosomes
 1. **Fraction of matched gender** (tumour only): fraction of the 4 SNPs on sex chromosomes that have matched genotypes in the normal sample
 1. **Fraction of matched genotype** (tumour only): fraction of 92 autosome SNPs that have matched genotypes in the normal sample
-1. **Normal Contamination** (tumour only): normal sample contamination in the tumour sample
+1. **Normal contamination** (tumour only): normal sample contamination in the tumour sample
 
-### Folder: genotypes_from_cgpwgs
+### `.tsv` files
 
-In this folder, there are four files containing the genotyping information of the two samples (the tumour and the normal).
+Four files containing the genotyping information of the two samples (the tumour and the normal):
 
 * **{tumour_sample}.full_gender.tsv** and **{normal_sample}.full_gender.tsv**
 
