@@ -10,7 +10,7 @@ cwlVersion: v1.0
 
 doc: |
     ![build_status](https://quay.io/repository/wtsicgp/ppcg-qc-from-sanger/status)
-    A Docker container of ppcg-qc-from-sanger tool. See the [ppcg-qc-from-sanger](https://github.com/cancerit/ppcg-qc-from-sanger) website for more information.
+    A Docker container of ppcg-qc-from-sanger. See the [ppcg-qc-from-sanger](https://github.com/cancerit/ppcg-qc-from-sanger) website for more information.
 
 dct:creator:
   "@id": "yaobo.xu@sanger.ac.uk"
@@ -20,12 +20,6 @@ dct:creator:
 requirements:
   - class: DockerRequirement
     dockerPull: "quay.io/wtsicgp/ppcg-qc-from-sanger:0.1.0"
-
-hints:
-  - class: ResourceRequirement
-    coresMin: 1 # works but long, 8 recommended
-    ramMin: 4000
-    outdirMin: 80000
 
 inputs:
   tumour_bas:
