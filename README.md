@@ -6,7 +6,7 @@ The tool is used to extract PPCG defined QC metrics from Sanger variant calling 
 
 ## Inputs
 
-### tumour and normal sample BASfiles
+### tumour and normal sample BAS files
 
   BAS file is one of the output of Sanger mapping pileline (cgpmap), which contains metrics collected during mapping and it has `.bas` suffix.
 
@@ -22,7 +22,7 @@ The tool is used to extract PPCG defined QC metrics from Sanger variant calling 
 
 Output of the tool is a tar file containing the following files:
 
-### {tumour_sample_name}_vs_{normal_sample_name}.ppcg_sanger_metrics.txt
+### `{tumour_sample_name}_vs_{normal_sample_name}.ppcg_sanger_metrics.txt`
 
 A tsv file containing the following columns:
 
