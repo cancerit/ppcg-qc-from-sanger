@@ -59,7 +59,7 @@ Four files containing the genotyping information of the two samples (the tumour 
 Installation is via `pip`.  Simply execute with the path to the packaged distribution:
 
 ```bash
-pip install --find-links=~/wheels ppcg-qc-from-sanger
+pip install -pip install https://github.com/cancerit/ppcg-qc-from-sanger/archive/master.tar.gz
 ```
 
 ## Development environment
