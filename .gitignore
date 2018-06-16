@@ -1,0 +1,12 @@
+/env/
+__pycache__/
+*.py[cod]
+*$py.class
+.coverage
+.cache
+htmlcov/
+/.eggs
+/build
+/dist
+/ppcg_qc_from_sanger.egg-info
+.pytest_cache/
