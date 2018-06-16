@@ -13,6 +13,6 @@
   },
   "result_tar": {
     "class": "File",
-    "path": "/tmp/out"
+    "path": "/tmp/out.tar.gz"
   }
 }
