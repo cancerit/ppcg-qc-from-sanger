@@ -1,3 +1,7 @@
+0.1.3
+
+* Corrected Docker container version in CWL
+
 0.1.2
 
 * Compitable with forced through ASCAT output.
