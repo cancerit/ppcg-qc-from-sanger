@@ -390,18 +390,21 @@ def get_gender_info_from_file(tumour_sample_name, extraced_gender_file):
 
 
 def get_purity_from_file(purity_file):
+    row_name = normal_contamination = None
     try:
-        first_line = open(purity_file, 'r').readlines()[0]
-        row_name, normal_contamination = first_line.rstrip('\n').split(' ')
+        for line in open(purity_file, 'r').readlines():
+            if re.match(r'^NormalContamination\s', line):
+                row_name, normal_contamination = line.rstrip('\n').split(' ')
+                break
     except Exception as exc:
         raise RuntimeError('can not load purity_file: %s' % str(exc))
-    if row_name != 'NormalContamination':
+    if not row_name:
         raise RuntimeError(
-            'first line in purity_file is invalid, expecting "NormalContamination", found: %s'
-            % first_line)
+            'purity_file: %s does not have a line starting with "NormalContamination ".'
+            % purity_file)
     if normal_contamination == '':
         raise RuntimeError(
-            'first line in purity_file is invalid, expected a float, found nothing.')
+            'normal contamination value in purity_file is invalid, expected a float, found nothing.')
     return normal_contamination
 
 
