@@ -290,8 +290,8 @@ def write_qc_metric_to_file(t_bas_content,
 
     if count_variants:
         # count variants
-        tumour_qc_metrics.extend([get_snv_count(extracted_snv_file),
-                                 get_indel_count(extracted_indel_file),
+        tumour_qc_metrics.extend([get_v_count(extracted_snv_file),
+                                 get_v_count(extracted_indel_file),
                                  get_sv_count(extracted_sv_file),
                                  get_cnv_count(extracted_cnv_file)])
         normal_qc_metrics.extend(['NA', 'NA', 'NA', 'NA'])
@@ -493,37 +493,41 @@ def get_variant_file_names(tumour_sample_name, normal_sample_name):
     return (snv_file, indel_file, sv_file, cnv_file)
 
 
-def get_snv_count(extracted_snv_file):
-    check_file_exists(extracted_snv_file)
-    cmd_return, return_code = exec_subp_and_wait(
-        f'gunzip -c {extracted_snv_file} | grep -c "\tPASS\t"')
+def get_v_count(extracted_v_file):
+    check_file_exists(extracted_v_file)
+    count_filtered, return_code = exec_subp_and_wait(
+        f'gunzip -c {extracted_v_file} | grep -c "\tPASS\t"')
     # when no pattern is found, grep exit 1 but it should be a expected behavior
-    if return_code == 1 and cmd_return != '0':
-        raise RuntimeError(f"Subprocess failed with return code {returncode}!")
-    return cmd_return
+    if return_code == 1 and count_filtered != '0':
+        raise RuntimeError(f"Subprocess failed with return code {return_code}!")
 
-
-def get_indel_count(extracted_indel_file):
-    check_file_exists(extracted_indel_file)
-    cmd_return, return_code = exec_subp_and_wait(
-        f'gunzip -c {extracted_indel_file} | grep -c "\tPASS\t"')
+    count_all, return_code = exec_subp_and_wait(
+        f'gunzip -c {extracted_v_file} | grep -c -v \'#\'')
     # when no pattern is found, grep exit 1 but it should be a expected behavior
-    if return_code == 1 and cmd_return != '0':
-        raise RuntimeError(f"Subprocess failed with return code {returncode}!")
-    return cmd_return
+    if return_code == 1 and count_all != '0':
+        raise RuntimeError(f"Subprocess failed with return code {return_code}!")
+
+    return f'{count_filtered}/{count_all}'
 
 
 def get_sv_count(extracted_sv_file):
     check_file_exists(extracted_sv_file)
-    cmd_return, return_code = exec_subp_and_wait(
+    count_filtered, return_code = exec_subp_and_wait(
         f'gunzip -c {extracted_sv_file}  | grep -v \'#\' | grep -c \'BAS=\'')
     # when no pattern is found, grep exit 1 but it should be a expected behavior
-    if return_code == 1 and cmd_return != '0':
-        raise RuntimeError(f"Subprocess failed with return code {returncode}!")
-    if int(cmd_return) % 2 != 0:
+    if return_code == 1 and count_filtered != '0':
+        raise RuntimeError(f"Subprocess failed with return code {return_code}!")
+
+    count_all, return_code = exec_subp_and_wait(
+        f'gunzip -c {extracted_sv_file}  | grep -c -v \'#\'')
+    # when no pattern is found, grep exit 1 but it should be a expected behavior
+    if return_code == 1 and count_all != '0':
+        raise RuntimeError(f"Subprocess failed with return code {return_code}!")
+
+    if int(count_all) % 2 != 0 or int(count_filtered) % 2 != 0:
         raise RuntimeError('counted BRASS calls returns an odd number.')
     # integer devision
-    return str(int(cmd_return)//2)
+    return f'{str(int(count_filtered)//2)}/{str(int(count_all)//2)}'
 
 
 def get_cnv_count(extracted_cnv_file):

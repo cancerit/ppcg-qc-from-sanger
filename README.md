@@ -44,9 +44,9 @@ A tsv file containing the following columns:
 
 Additional columns if uses `--count_variants` flag:
 
-1. **Number of SNVs** (tumour only): number of 'PASS'ed variants in the CAVEMAN flagged VCF output
-1. **Number of INDELs** (tumour only): number of 'PASS'ed variants in the PINDEL flagged VCF output
-1. **Number of SVs** (tumour only): number of variants with 'BAS' info tag in the BRASS VCF output, devided by 2
+1. **Number of SNVs** (tumour only): number of 'PASS'ed variants in the CAVEMAN flagged VCF output `/` all variants in the file
+1. **Number of INDELs** (tumour only): number of 'PASS'ed variants in the PINDEL flagged VCF output `/` all variants in the file
+1. **Number of SVs** (tumour only): number of variants with 'BAS' info tag in the BRASS VCF output, devided by 2 `/` all variants in the file devided by 2 *(in the VCF, one SV is recorded with two rows)*
 1. **Number of CNVs** (tumour only): number of variants which have different copy numbers between Normal and Tumour sample in the ASCAT VCF output
 
 ### `.tsv` files

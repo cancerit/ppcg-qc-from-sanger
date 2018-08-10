@@ -1,3 +1,7 @@
+0.2.4
+
+* variant count columns also have number of all variants
+
 0.2.3
 
 * added optional flag in cwl to count variants
