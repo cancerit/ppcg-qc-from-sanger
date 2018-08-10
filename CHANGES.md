@@ -1,3 +1,7 @@
+0.2.0
+
+* added option to count variants
+
 0.1.3
 
 * Corrected Docker container version in CWL

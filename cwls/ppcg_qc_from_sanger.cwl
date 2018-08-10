@@ -19,7 +19,7 @@ dct:creator:
 
 requirements:
   - class: DockerRequirement
-    dockerPull: "quay.io/wtsicgp/ppcg-qc-from-sanger:0.1.3"
+    dockerPull: "quay.io/wtsicgp/ppcg-qc-from-sanger:0.2.1"
 
 inputs:
   tumour_bas:
@@ -57,6 +57,12 @@ inputs:
       prefix: -o
       position: 4
       separate: true
+
+  count_variants:
+    type: boolean
+    doc: "output variant counts"
+    inputBinding:
+      prefix: -cv
 
 outputs:
   result_tar:

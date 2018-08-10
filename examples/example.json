@@ -11,6 +11,7 @@
     "class": "File",
     "path": "https://github.com/cancerit/ppcg-qc-from-sanger/raw/develop/tests/data/test.tar.gz"
   },
+  "count_variants": true,
   "result_tar": {
     "class": "File",
     "path": "/tmp/out.tar.gz"
