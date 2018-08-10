@@ -19,7 +19,7 @@ dct:creator:
 
 requirements:
   - class: DockerRequirement
-    dockerPull: "quay.io/wtsicgp/ppcg-qc-from-sanger:0.1.3"
+    dockerPull: "quay.io/wtsicgp/ppcg-qc-from-sanger:0.2.0"
 
 inputs:
   tumour_bas:
