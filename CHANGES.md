@@ -1,3 +1,7 @@
+0.2.3
+
+* added optional flag in cwl to count variants
+
 0.2.0
 
 * added option to count variants
