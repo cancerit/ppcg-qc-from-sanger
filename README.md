@@ -42,6 +42,13 @@ A tsv file containing the following columns:
 1. **Fraction of matched genotype** (tumour only): fraction of 92 autosome SNPs that have matched genotypes in the normal sample
 1. **Normal contamination** (tumour only): normal sample contamination in the tumour sample
 
+Additional columns if uses `--count_variants` flag:
+
+1. **Number of SNVs** (tumour only): number of 'PASS'ed variants in the CAVEMAN flagged VCF output
+1. **Number of INDELs** (tumour only): number of 'PASS'ed variants in the PINDEL flagged VCF output
+1. **Number of SVs** (tumour only): number of variants with 'BAS' info tag in the BRASS VCF output, devided by 2
+1. **Number of CNVs** (tumour only): number of variants in the ASCAT vcf output, which have different copy numbers between Normal and Tumour sample
+
 ### `.tsv` files
 
 Four files containing the genotyping information of the two samples (the tumour and the normal):

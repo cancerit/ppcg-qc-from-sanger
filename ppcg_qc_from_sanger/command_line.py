@@ -54,7 +54,7 @@ def main():
         default=3137454505)
     parser.add_argument(
         '-cv', '--count_variants',
-        action='store_true', help='count "PASS"ed SNVs, INDELs, SVs and CNVs in the tumour sample.')
+        action='store_true', help='write number of SNVs, INDELs, SVs and CNVs in the tumour sample to the output.')
     parser.add_argument(
         '-d', '--debug',
         action='store_true', help='print more info for debug.')
