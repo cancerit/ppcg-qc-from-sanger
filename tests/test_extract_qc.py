@@ -7,6 +7,7 @@ from argparse import Namespace
 import tarfile
 import ppcg_qc_from_sanger.extract_qc as extract_qc
 
+
 class PpcgQcFromSangerExtractQcTestCase(unittest.TestCase):
 
     def setUp(self):
@@ -28,13 +29,16 @@ class PpcgQcFromSangerExtractQcTestCase(unittest.TestCase):
             test_file = self.write_to_file(temp_dir, test_file_content)
             with pytest.raises(RuntimeError) as exc:
                 purity = testing_function(test_file)
-            self.assertIn('first line in purity_file is invalid', str(exc.value))
+            self.assertIn(
+                'normal contamination value in purity_file is invalid, expected a float, found nothing.',
+                str(exc.value))
 
             test_file_content = 'normalContamination \n'
             test_file = self.write_to_file(temp_dir, test_file_content)
             with pytest.raises(RuntimeError) as exc:
                 purity = testing_function(test_file)
-            self.assertIn('first line in purity_file is invalid', str(exc.value))
+            self.assertIn('does not have a line starting with "NormalContamination "',
+                          str(exc.value))
 
     def write_to_file(self, dir, content, file_name=None):
         if file_name is None:
@@ -98,7 +102,9 @@ class PpcgQcFromSangerExtractQcTestCase(unittest.TestCase):
                     os.path.join(temp_dir, e_gender_file),
                     os.path.join(temp_dir, e_purity_file),
                     [os.path.join(temp_dir, a_file) for a_file in e_contamination_files],
-                    [os.path.join(temp_dir, os.path.basename(a_file)) for a_file in e_genotype_files]
+                    [os.path.join(temp_dir, os.path.basename(a_file))
+                        for a_file in e_genotype_files],
+                    None, None, None, None
                 ),
                 return_files
             )
@@ -128,25 +134,26 @@ class PpcgQcFromSangerExtractQcTestCase(unittest.TestCase):
                 variant_call_tar=os.path.join(self.test_dir, 'test.tar.gz'),
                 output_tar=os.path.join(temp_dir, 'result.tar.gz'),
                 genome_size=3137454505,
-                debug=False
+                debug=False,
+                count_variants=False,
             )
+            # run the function to have outputs
             self.assertEqual(testing_function(good_args), None)
+
             # check if the metrics are as expected.
             metrics_file = 'tumour_sample_vs_normal_sample.ppcg_sanger_metrics.txt'
             with tarfile.open(good_args.output_tar, 'r:gz') as tar:
                 result_files = [a_file.name for a_file in tar.getmembers()]
-                print(result_files)
                 tar.extract(metrics_file, path=temp_dir)
             self.assertEqual(
                 open(os.path.join(temp_dir, metrics_file), 'r').read(),
                 open(os.path.join(self.test_dir, 'expected_metrics.txt')).read()
             )
+
             # check if expected files are in the tar
             e_genotype_files = \
                 extract_qc.get_metrics_file_names('tumour_sample', 'normal_sample')[3]
             for a_file in e_genotype_files:
-                print(a_file)
-                print(result_files)
                 self.assertTrue(os.path.basename(a_file) in result_files)
 
             # test wrong genome size type
@@ -163,3 +170,18 @@ class PpcgQcFromSangerExtractQcTestCase(unittest.TestCase):
             with pytest.raises(RuntimeError) as exc:
                 testing_function(args)
             self.assertIn('does not exist', str(exc.value))
+
+            # test if variants can be counted correctly
+            args = Namespace(**vars(good_args))
+            args.count_variants = True
+            args.output_tar = os.path.join(temp_dir, 'result_2.tar.gz')
+            # run the function to have outputs
+            self.assertEqual(testing_function(args), None)
+            metrics_file = 'tumour_sample_vs_normal_sample.ppcg_sanger_metrics.txt'
+            with tarfile.open(args.output_tar, 'r:gz') as tar:
+                result_files = [a_file.name for a_file in tar.getmembers()]
+                tar.extract(metrics_file, path=temp_dir)
+            self.assertEqual(
+                open(os.path.join(temp_dir, metrics_file), 'r').read(),
+                open(os.path.join(self.test_dir, 'expected_metrics_with_variant_counts.txt')).read()
+            )
