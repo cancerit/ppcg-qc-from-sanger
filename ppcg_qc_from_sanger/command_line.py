@@ -53,6 +53,9 @@ def main():
         help='The genome size, default to GRCh37 size, which is 3,137,454,505.',
         default=3137454505)
     parser.add_argument(
+        '-cv', '--count_variants',
+        action='store_true', help='count "PASS"ed SNVs, INDELs, SVs and CNVs in the tumour sample.')
+    parser.add_argument(
         '-d', '--debug',
         action='store_true', help='print more info for debug.')
     parser.set_defaults(func=extract_from_sanger)
