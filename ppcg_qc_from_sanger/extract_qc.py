@@ -459,7 +459,7 @@ def get_purity_from_file(purity_file):
             % purity_file)
     if normal_contamination == '':
         raise RuntimeError(
-            'normal contamination value in purity_file is invalid, expected a float, found nothing.')
+            'normal contamination value in purity_file is invalid, expect a float, found nothing.')
     return normal_contamination
 
 
@@ -495,7 +495,8 @@ def get_variant_file_names(tumour_sample_name, normal_sample_name):
 
 def get_snv_count(extracted_snv_file):
     check_file_exists(extracted_snv_file)
-    cmd_return, return_code = exec_subp_and_wait(f'gunzip -c {extracted_snv_file} | grep -c -P \'\tPASS\t\'')
+    cmd_return, return_code = exec_subp_and_wait(
+        f'gunzip -c {extracted_snv_file} | grep -c "\tPASS\t"')
     # when no pattern is found, grep exit 1 but it should be a expected behavior
     if return_code == 1 and cmd_return != '0':
         raise RuntimeError(f"Subprocess failed with return code {returncode}!")
@@ -504,7 +505,8 @@ def get_snv_count(extracted_snv_file):
 
 def get_indel_count(extracted_indel_file):
     check_file_exists(extracted_indel_file)
-    cmd_return, return_code = exec_subp_and_wait(f'gunzip -c {extracted_indel_file} | grep -c -P \'\tPASS\t\'')
+    cmd_return, return_code = exec_subp_and_wait(
+        f'gunzip -c {extracted_indel_file} | grep -c "\tPASS\t"')
     # when no pattern is found, grep exit 1 but it should be a expected behavior
     if return_code == 1 and cmd_return != '0':
         raise RuntimeError(f"Subprocess failed with return code {returncode}!")
@@ -513,7 +515,8 @@ def get_indel_count(extracted_indel_file):
 
 def get_sv_count(extracted_sv_file):
     check_file_exists(extracted_sv_file)
-    cmd_return, return_code = exec_subp_and_wait(f'gunzip -c {extracted_sv_file}  | grep -v \'#\' | grep -c \'BAS=\'')
+    cmd_return, return_code = exec_subp_and_wait(
+        f'gunzip -c {extracted_sv_file}  | grep -v \'#\' | grep -c \'BAS=\'')
     # when no pattern is found, grep exit 1 but it should be a expected behavior
     if return_code == 1 and cmd_return != '0':
         raise RuntimeError(f"Subprocess failed with return code {returncode}!")

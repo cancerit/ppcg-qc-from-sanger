@@ -30,7 +30,7 @@ class PpcgQcFromSangerExtractQcTestCase(unittest.TestCase):
             with pytest.raises(RuntimeError) as exc:
                 purity = testing_function(test_file)
             self.assertIn(
-                'normal contamination value in purity_file is invalid, expected a float, found nothing.',
+                'normal contamination value in purity_file is invalid, expect a float, found nothing.',
                 str(exc.value))
 
             test_file_content = 'normalContamination \n'
