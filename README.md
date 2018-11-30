@@ -35,12 +35,12 @@ A tsv file containing the following columns:
 1. **r1 GC content**: mean GC base content of all read 1 in read pairs
 1. **r2 GC content**: mean GC base content of all read 2 in read pairs
 1. **Fraction of duplicated reads**: number of mapped pairs divided by the number of total reads
-1. **Fraction of mis-matched pair**: number of mismatched pairs divided by the number of total read pairs
-1. **Contamination**: contamination (SNP based)
+1. **Fraction of mis-matched pair**: number of mismatched pairs (including pairs with only one mate mapped) divided by the number of total read pairs
+1. **Contamination**: contamination (based on SNPs)
 1. **Gender** (tumour only): deduced gender from genotypes of 4 SNPs on sex chromosomes
 1. **Fraction of matched gender** (tumour only): fraction of the 4 SNPs on sex chromosomes that have matched genotypes in the normal sample
 1. **Fraction of matched genotype** (tumour only): fraction of 92 autosome SNPs that have matched genotypes in the normal sample
-1. **Normal contamination** (tumour only): normal sample contamination in the tumour sample
+1. **Normal contamination** (tumour only): Estimate of normal cells contaminating sample
 
 Additional columns if uses `--count_variants` flag:
 
@@ -73,7 +73,7 @@ pip install -pip install https://github.com/cancerit/ppcg-qc-from-sanger/archive
 
 ### Setup VirtualEnv
 
-```
+```bash
 cd $PROJECTROOT
 hash virtualenv || pip3 install virtualenv
 virtualenv -p python3 env
@@ -87,7 +87,7 @@ pip freeze | grep -v `echo ${PWD##*/}` > requirements.txt
 
 For testing/coverage (`./run_tests.sh`)
 
-```
+```bash
 source env/bin/activate # if not already in env
 pip install pytest
 pip install pytest-cov
@@ -99,7 +99,7 @@ pip install requests_mock
 
 Test that `mdl` is available, if not add the following to your path variable:
 
-```
+```bash
 export PATH=$HOME/.gem/ruby/X.X.X/bin:$PATH
 ```
 

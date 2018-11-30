@@ -6,7 +6,6 @@ import argparse
 import sys
 import pkg_resources  # part of setuptools
 import os.path
-
 from ppcg_qc_from_sanger.extract_qc import extract_from_sanger
 
 version = pkg_resources.require("ppcg-qc-from-sanger")[0].version
@@ -24,20 +23,23 @@ def main():
     parser.add_argument(
         '-tb', '--tumour_bas',
         dest='tumour_bas',
-        metavar='FILE',
+        metavar='FILE|DIRECTORY',
         help='Tumour sample BAS file (.bam.bas) from cgpmap pipeline.',
+        nargs='+',
         required=True)
     parser.add_argument(
         '-nb', '--normal_bas',
         dest='normal_bas',
-        metavar='FILE',
+        metavar='FILE|DIRECTORY',
         help='Normal sample BAS file (.bam.bas) from cgpmap pipeline.',
+        nargs='+',
         required=True)
     parser.add_argument(
         '-rt', '--variant_call_tar',
         dest='variant_call_tar',
-        metavar='FILE',
+        metavar='FILE|DIRECTORY',
         help='The compressed tar result file from cgpwgs variant calling pipeline of the two samples, requires ".tar.gz" extension.',
+        nargs='+',
         required=True)
     parser.add_argument(
         '-o', '--output_tar',
@@ -52,6 +54,12 @@ def main():
         type=int,
         help='The genome size, default to GRCh37 size, which is 3,137,454,505.',
         default=3137454505)
+    parser.add_argument(
+        '-mt', '--metadata',
+        dest='metadata',
+        metavar='FILE|DIRECTORY',
+        help='CgpNgsQC validate_sample_meta.pl output tsv file(s), with extra optional columns: "Sequencing Year" and "Sequencer"',
+        nargs='+')
     parser.add_argument(
         '-cv', '--count_variants',
         action='store_true', help='write number of SNVs, INDELs, SVs and CNVs in the tumour sample to the output.')
