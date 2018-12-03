@@ -1,4 +1,5 @@
 import os
+import sys
 import tarfile
 import logging
 import re
@@ -114,6 +115,15 @@ OUTPUT_HEADER = [
 VARIANT_COUNT_HEADER = [
     'Number of SNVs (PASS/All)', 'Number of INDELs (PASS/All)', 'Number of SVs (PASS/All)', 'Number of CNVs']
 
+PPCG_META_TO_EXTRACTOR_MAP = {
+    'donor_id': 'donor_id',
+    'donor_uuid': 'donor_uuid',
+    'sequencer': ['tumour_sequencing_year', 'normal_sequencing_year'],
+    'sequencing_year': ['tumour_sequencing_year', 'normal_sequencing_year'],
+    'sample_id': ['tumour_id', 'normal_id'],
+    'sample_uuid': ['tumour_uuid', 'normal_uuid']
+}
+
 
 def extract_from_sanger(args):
     '''
@@ -126,7 +136,7 @@ def extract_from_sanger(args):
     genome_size = args.genome_size
     if not isinstance(genome_size, int):
         logger.critical('genome_size is not int')
-        raise RuntimeError('genome_size is not int')
+        sys.exit(1)
 
     output_tar = get_abs_path(args.output_tar)
     # if tar file has '.tar.gz' extension
@@ -139,22 +149,22 @@ def extract_from_sanger(args):
                 out.write('place holder\n')
         except OSError as exc:
             logger.critical('output is not writable: %s.', str(exc))
-            raise RuntimeError('output is not writable: %s.' % str(exc))
+            sys.exit(1)
         finally:
             os.remove(output_tar)
     else:
         logger.critical('existing output file: %s.', output_tar)
-        raise RuntimeError('existing output file: %s.' % output_tar)
+        sys.exit(1)
 
     tumour_bas = get_all_bas(args.tumour_bas)
     normal_bas = get_all_bas(args.normal_bas)
     variant_call_tars = get_all_variant_call_tar(args.variant_call_tar)
 
-    t_n_pair_tar, t_name_bas, n_name_bas = \
-        get_validated_tn_pair_and_bas_lists(tumour_bas, normal_bas, variant_call_tars)
+    t_name_bas, n_name_bas, t_n_pair_tar = \
+        get_validated_t_n_pair_and_bas_lists(tumour_bas, normal_bas, variant_call_tars)
     if args.metadata:
-        metadata_list = get_all_meta(args.metadata)
-        t_n_pair_meta = get_t_n_pair_meta(metadata_list, t_n_pair_tar.keys())
+        sample_id_meta, sample_uuid_meta = get_sample_meta(get_all_meta(args.metadata))
+        t_n_pair_meta = get_t_n_pair_meta(sample_id_meta, sample_uuid_meta, t_n_pair_tar.keys())
 
     count_variants = args.count_variants
     # print('count_variants', count_variants)
@@ -198,7 +208,7 @@ def extract_from_sanger(args):
                     tar.add(a_file, arcname=os.path.basename(a_file))
         except Exception as exc:
             logger.critical('failed to create the final output: %s', str(exc))
-            raise RuntimeError('failed to create the final output: %s' % str(exc))
+            sys.exit(1)
     logger.info('completed')
 
 
@@ -233,7 +243,7 @@ def get_all_variant_call_tar(input_call_tars: List[str]):
     return to_return
 
 
-def get_validated_tn_pair_and_bas_lists(tumour_bas: List[str], normal_bas: List[str], variant_call_tars: List[str]) -> Tuple[Dict[Tuple[str, str], str], Dict[str, str], Dict[str, str]]:
+def get_validated_t_n_pair_and_bas_lists(tumour_bas: List[str], normal_bas: List[str], variant_call_tars: List[str]) -> Tuple[Dict[str, str], Dict[str, str], Dict[Tuple[str, str], str]]:
     t_n_pair_tar: Dict[Tuple[str, str], str] = get_all_t_n_pairs(variant_call_tars)
     expected_tumours = [a_pair[0] for a_pair in t_n_pair_tar.keys()]
     expected_normals = [a_pair[1] for a_pair in t_n_pair_tar.keys()]
@@ -244,14 +254,14 @@ def get_validated_tn_pair_and_bas_lists(tumour_bas: List[str], normal_bas: List[
     not_found = sorted(set(expected_tumours) - set(t_name_bas.keys()))
     if not_found:
         logger.critical('Missing BAS files for tumour samples: %s', ', '.join(not_found))
-        raise RuntimeError('Missing BAS files for tumour samples: %s' % ', '.join(not_found))
+        sys.exit(1)
     # if all expected normal have bas
     not_found = sorted(set(expected_normals) - set(n_name_bas.keys()))
     if not_found:
         logger.critical('Missing BAS files for normal samples: %s', ', '.join(not_found))
-        raise RuntimeError('Missing BAS files for normal samples: %s' % ', '.join(not_found))
+        sys.exit(1)
 
-    return t_n_pair_tar, t_name_bas, n_name_bas
+    return t_name_bas, n_name_bas, t_n_pair_tar
 
 
 def get_all_t_n_pairs(variant_call_tars) -> Dict[Tuple[str, str], str]:
@@ -269,7 +279,7 @@ def get_all_t_n_pairs(variant_call_tars) -> Dict[Tuple[str, str], str]:
                     break
         if not t_name:
             logger.critical(f'Not a valid Sanger Variant Call result archive: {a_tar}')
-            raise RuntimeError(f'Not a valid Sanger Variant Call result archive: {a_tar}')
+            sys.exit(1)
         t_n_pair_tar[(t_name, n_name)] = a_tar
     return t_n_pair_tar
 
@@ -295,11 +305,81 @@ def get_all_meta(metadata_paths):
     return to_return
 
 
-def get_t_n_pair_meta(meta_files, t_n_pairs: List[str]) -> Tuple[Dict[str, dict], Dict[str, dict]]:
-    # sample_id_meta = {}
-    # sample_uuid_meta = {}
-    # for meta_file in meta_files:
-    #     with open(meta_file, 'r') as meta:
-    #         # TODO use pandas
-    #         # concatecate all meta into one big dataframe.
-    return (1,2)
+def get_t_n_pair_meta(sample_id_meta, sample_uuid_meta, t_n_pairs: List[str]) -> Tuple[Dict[str, dict], Dict[str, dict]]:
+
+    to_return = {}
+
+    for tumour, normal in t_n_pairs:
+        t_dict = sample_uuid_meta.get(tumour, {})
+        if not t_dict:
+            t_dict = sample_id_meta.get(tumour, {})
+
+        n_dict = sample_uuid_meta.get(normal, {})
+        if not n_dict:
+            n_dict = sample_id_meta.get(normal, {})
+
+        to_return[(tumour, normal)] = {
+            PPCG_META_TO_EXTRACTOR_MAP['donor_id']: t_dict.get('donor_id', None),
+            PPCG_META_TO_EXTRACTOR_MAP['donor_uuid']: t_dict.get('donor_uuid', None),
+            PPCG_META_TO_EXTRACTOR_MAP['sequencer'][0]: t_dict.get('sequencer', None),
+            PPCG_META_TO_EXTRACTOR_MAP['sequencing_year'][0]: t_dict.get('sequencing_year', None),
+            PPCG_META_TO_EXTRACTOR_MAP['sample_id'][0]: t_dict.get('sample_id', None),
+            PPCG_META_TO_EXTRACTOR_MAP['sample_uuid'][0]: t_dict.get('sample_uuid', None),
+            PPCG_META_TO_EXTRACTOR_MAP['sequencer'][1]: n_dict.get('sequencer', None),
+            PPCG_META_TO_EXTRACTOR_MAP['sequencing_year'][1]: n_dict.get('sequencing_year', None),
+            PPCG_META_TO_EXTRACTOR_MAP['sample_id'][1]: n_dict.get('sample_id', None),
+            PPCG_META_TO_EXTRACTOR_MAP['sample_uuid'][1]: n_dict.get('sample_uuid', None)
+        }
+    return to_return
+
+
+def get_sample_meta(meta_files) -> Tuple[Dict[str, dict], Dict[str, dict]]:
+    '''
+    process tsv files into valid metadata
+    '''
+    sample_id_meta = {}
+    sample_uuid_meta = {}
+
+    for meta_file in meta_files:
+        with open(meta_file, 'r') as meta:
+            sample_id_index  = sample_uuid_index = None
+            lower_case_header = [ele.lower() for ele in meta.readline().split('\t')]
+            try:
+                sample_id_index = lower_case_header.index('Sample_ID')
+            except ValueError:
+                logger.warning('can not find Sample_ID column in input meta: %s', meta_file)
+
+            try:
+                sample_id_index = lower_case_header.index('Sample_UUID')
+            except ValueError:
+                logger.warning('can not find Sample_UUID column in input meta: %s', meta_file)
+
+            if not any(sample_id_index, sample_uuid_index):
+                logger.critical('can not find Sample_ID or Sample_UUID column in input meta: %s', meta_file)
+                sys.exit(1)
+
+            for line in meta:
+                line_split = line.split('\t')
+                valid_dict = get_valid_meta_dict(lower_case_header, line_split)
+                if sample_id_index:
+                    sample_id = line_split[sample_id_index]
+                    if sample_id in sample_id_meta:
+                        logger.critical('duplicated sample_id: %s is found in: %s', sample_id, meta_file)
+                        sys.exit(1)
+                    sample_id_meta[sample_id] = valid_dict
+                if sample_uuid_index:
+                    sample_uuid = line_split[sample_uuid_index]
+                    if sample_uuid in sample_uuid_meta:
+                        logger.critical('duplicated sample_uuid: %s is found in: %s', sample_uuid, meta_file)
+                        sys.exit(1)
+                    sample_uuid_meta[sample_uuid] = {**valid_dict}
+
+    return sample_id_meta, sample_uuid_meta
+
+
+def get_valid_meta_dict(header, line_split):
+    to_return = {}
+    for a_key in PPCG_META_TO_EXTRACTOR_MAP.keys():
+        if a_key in header:
+            to_return[a_key] = line_split[header.index(a_key)]
+    return to_return
