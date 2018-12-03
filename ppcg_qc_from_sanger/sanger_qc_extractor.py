@@ -23,6 +23,7 @@ cha.setFormatter(logging.Formatter('%(asctime)s %(levelname)8s - %(message)s',
 logger.addHandler(cha)
 logger.setLevel(logging.DEBUG)
 
+
 def set_extractor_logger_level(logging_level):
     global logger
     logger.setLevel(logging_level)
@@ -77,8 +78,7 @@ class SangerQcMetricsExtractor(object):
 
     NA_STRING = 'NA'
 
-    def __init__(self, tumour_bas, normal_bas, genome_size,
-        variant_call_tar, output_dir, count_variants, metadata: Dict[str, str] = None):
+    def __init__(self, tumour_bas, normal_bas, genome_size, variant_call_tar, output_dir, count_variants, metadata: Dict[str, str] = None):
         '''
         the main function for handling the whole QC metrics extraction process
         '''
@@ -214,10 +214,10 @@ class SangerQcMetricsExtractor(object):
             )
 
         return to_return
-    
+
     def get_genotyping_files(self):
         return self.extracted_files['genotyping']
-    
+
     def clean_output_dir(self):
         try:
             shutil.rmtree(os.path.join(self.output_dir, f'WGS_{self.t_sample_name}_vs_{self.n_sample_name}'))
@@ -262,7 +262,7 @@ class SangerQcMetricsExtractor(object):
             raise RuntimeError(
                 'normal contamination value in purity_file is invalid, expect a float, found nothing.')
         return normal_contamination
-    
+
     def get_snv_count(self):
         return self.get_v_count(self.extracted_files['variants']['snv'])
 
@@ -356,11 +356,11 @@ class SangerQcMetricsExtractor(object):
     def get_seq_depth_from_bas(bas_content, genome_size):
         mapped_per_lane = [int(rg[SangerQcMetricsExtractor.BAS_HEADER.index('#_mapped_bases')]) for rg in bas_content]
         total_mapped = sum(mapped_per_lane)
-        return  ','.join([format_float(mapped/genome_size) for mapped in mapped_per_lane]), format_float(total_mapped/genome_size)
-    
+        return ','.join([format_float(mapped/genome_size) for mapped in mapped_per_lane]), format_float(total_mapped/genome_size)
+
     def get_tumour_seq_depth(self):
         return self.get_seq_depth_from_bas(self.t_bas_content, self.genome_size)
-    
+
     def get_normal_seq_depth(self):
         return self.get_seq_depth_from_bas(self.n_bas_content, self.genome_size)
 
@@ -371,10 +371,10 @@ class SangerQcMetricsExtractor(object):
         return ','.join(
                 [format_float(m_read/t_read) for m_read, t_read in zip(mapped_reads, total_reads)]
             ), format_float(sum(mapped_reads)/sum(total_reads))
-    
+
     def get_tumour_mapping_rate(self):
         return self.get_mapping_rate_from_bas(self.t_bas_content)
-    
+
     def get_normal_mapping_rate(self):
         return self.get_mapping_rate_from_bas(self.n_bas_content)
 
@@ -429,13 +429,13 @@ class SangerQcMetricsExtractor(object):
 
     def get_tumour_gc_r1(self):
         return self.get_gc_from_bas(self.t_bas_content)
-    
+
     def get_normal_gc_r1(self):
         return self.get_gc_from_bas(self.n_bas_content)
-    
+
     def get_tumour_gc_r2(self):
         return self.get_gc_from_bas(self.t_bas_content, r1=False)
-    
+
     def get_normal_gc_r2(self):
         return self.get_gc_from_bas(self.n_bas_content, r1=False)
 
@@ -452,7 +452,7 @@ class SangerQcMetricsExtractor(object):
 
     def get_tumour_duplicate_r_rate(self):
         return self.get_duplicate_r_rate_from_bas(self.t_bas_content)
-    
+
     def get_normal_duplicate_r_rate(self):
         return self.get_duplicate_r_rate_from_bas(self.n_bas_content)
 
@@ -468,7 +468,7 @@ class SangerQcMetricsExtractor(object):
 
     def get_tumour_mismatched_pair_rate(self):
         return self.get_mismatched_pair_rate_from_bas(self.t_bas_content)
-    
+
     def get_normal_mismatched_pair_rate(self):
         return self.get_mismatched_pair_rate_from_bas(self.n_bas_content)
 
@@ -536,19 +536,18 @@ class SangerQcMetricsExtractor(object):
 
     def get_tumour_contamination(self):
         return self.get_contamination_from_file(self.t_rg_ids, self.extracted_files['contamination'][0], self.t_sample_name)
-    
+
     def get_normal_contamination(self):
         return self.get_contamination_from_file(self.n_rg_ids, self.extracted_files['contamination'][1], self.n_sample_name)
 
     @staticmethod
     def validate_metadata(metadata: Dict[str, str]):
         valid_metadata = {}
-        
         available = sorted(
             list(
                 set(SangerQcMetricsExtractor.VALID_METADATA_KEYS) & set(metadata.keys())
             ),
-            key = lambda x: SangerQcMetricsExtractor.VALID_METADATA_KEYS.index(x)
+            key=lambda x: SangerQcMetricsExtractor.VALID_METADATA_KEYS.index(x)
         )
         if available:
             logger.debug('%s are found in the given metadata', ', '.join(available))

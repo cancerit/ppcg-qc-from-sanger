@@ -111,7 +111,7 @@ OUTPUT_HEADER = [
     'Normal contamination per RG',
     'Normal mean contamination',
     'Donor ID',
-    'Donor UUID',]
+    'Donor UUID']
 
 VARIANT_COUNT_HEADER = [
     'Number of SNVs (PASS/All)', 'Number of INDELs (PASS/All)', 'Number of SVs (PASS/All)', 'Number of CNVs']
@@ -298,7 +298,7 @@ def get_sample_names_bas_file_dict(bas_list):
     }
 
 
-def get_all_meta(metadata_paths): 
+def get_all_meta(metadata_paths):
     to_return = []
     for path in metadata_paths:
         check_file_exists_for_user(path, logger)
@@ -358,7 +358,7 @@ def get_sample_meta(meta_files) -> Tuple[Dict[str, dict], Dict[str, dict]]:
     for meta_file in meta_files:
         with open(meta_file, 'r') as meta:
             logger.debug('processing metadata file: %s...', meta_file)
-            sample_id_index  = sample_uuid_index = None
+            sample_id_index = sample_uuid_index = None
             lower_case_header = [ele.lower() for ele in meta.readline().split('\t')]
             try:
                 sample_id_index = lower_case_header.index('sample_id')

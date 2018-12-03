@@ -3,6 +3,7 @@ from typing import Tuple
 import os
 import sys
 
+
 def exec_subp_and_wait(command: str) -> Tuple[str, int]:
     process = subprocess.Popen(command, shell=True, encoding='UTF-8', stdout=subprocess.PIPE)
     com_return = process.stdout.read()
