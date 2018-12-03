@@ -8,7 +8,7 @@ import json
 import re
 import gzip
 from tempfile import TemporaryDirectory
-from . import exec_subp_and_wait, check_file_exists, format_float, get_abs_path
+from . import exec_subp_and_wait, check_file_exists, format_float
 from typing import Dict, List, Any
 
 
@@ -86,14 +86,12 @@ class SangerQcMetricsExtractor(object):
             raise RuntimeError('genome_size is not int')
 
         # if bas files hava valid columns
-        tumour_bas = get_abs_path(tumour_bas)
-        normal_bas = get_abs_path(normal_bas)
         self.validate_bas(tumour_bas)
         self.validate_bas(normal_bas)
         self.validate_tar_name(variant_call_tar)
 
         self.genome_size = genome_size
-        self.variant_call_tar = get_abs_path(variant_call_tar)
+        self.variant_call_tar = variant_call_tar
         self.t_bas_content = self.get_bas_content(tumour_bas)
         self.t_sample_name = self.get_sample_name_from_bas(self.t_bas_content)
         self.n_bas_content = self.get_bas_content(normal_bas)

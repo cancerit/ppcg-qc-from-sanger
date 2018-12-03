@@ -3,9 +3,10 @@ import sys
 import tarfile
 import logging
 import re
+import json
 from tempfile import TemporaryDirectory
 from .sanger_qc_extractor import SangerQcMetricsExtractor, set_extractor_logger_level
-from . import get_abs_path, check_file_exists
+from . import check_file_exists_for_user
 from typing import List, Dict, Tuple, Any
 
 # TODO Change inputs to lists, complain if tumour samples have duplicated names, complain if missing bas files, warning if there're more tumour or normal bas files!
@@ -58,8 +59,8 @@ BAS_HEADER = [
 
 OUTPUT_HEADER = [
     'Tumour sample name',
-    'Tumour ID',
-    'Tumour UUID',
+    'Tumour sample ID',
+    'Tumour sample UUID',
     'Tumour sequencing year',
     'Tumour sequencer',
     'Tumour ReadGroup IDs',
@@ -86,8 +87,8 @@ OUTPUT_HEADER = [
     'Tumour fraction of matched genotype with Normal',
     'Normal contamination in Tumour',
     'Normal sample name',
-    'Normal ID',
-    'Normal UUID',
+    'Normal sample ID',
+    'Normal sample UUID',
     'Normal sequencing year',
     'Normal sequencer',
     'Normal ReadGroup IDs',
@@ -138,7 +139,7 @@ def extract_from_sanger(args):
         logger.critical('genome_size is not int')
         sys.exit(1)
 
-    output_tar = get_abs_path(args.output_tar)
+    output_tar = os.path.abspath(args.output_tar)
     # if tar file has '.tar.gz' extension
     SangerQcMetricsExtractor.validate_tar_name(output_tar)
 
@@ -156,14 +157,24 @@ def extract_from_sanger(args):
         logger.critical('existing output file: %s.', output_tar)
         sys.exit(1)
 
+    logger.info('checking tumour BAS file(s)..')
     tumour_bas = get_all_bas(args.tumour_bas)
+    logger.info('checking normal BAS file(s)..')
     normal_bas = get_all_bas(args.normal_bas)
+
+    if args.metadata:
+        logger.info('checking metadata file(s)..')
+        sample_id_meta, sample_uuid_meta = get_sample_meta(get_all_meta(args.metadata))
+
+    logger.info('checking Sanger variant call result file(s)..')
     variant_call_tars = get_all_variant_call_tar(args.variant_call_tar)
 
     t_name_bas, n_name_bas, t_n_pair_tar = \
         get_validated_t_n_pair_and_bas_lists(tumour_bas, normal_bas, variant_call_tars)
+
+    t_n_pair_meta = {}
     if args.metadata:
-        sample_id_meta, sample_uuid_meta = get_sample_meta(get_all_meta(args.metadata))
+        logger.info('read in metadata file(s)..')
         t_n_pair_meta = get_t_n_pair_meta(sample_id_meta, sample_uuid_meta, t_n_pair_tar.keys())
 
     count_variants = args.count_variants
@@ -171,19 +182,6 @@ def extract_from_sanger(args):
 
     # create a temp dir to store extracted files
     with TemporaryDirectory() as temp_dir:
-        # print(temp_dir)
-        # metadata = {
-        #     'tumour_id': 't_sample',
-        #     'tumour_uuid': 't_uuid_uuid',
-        #     'tumour_sequencing_year': '1910',
-        #     'tumour_sequencer': 'sanger',
-        #     'normal_sequencing_year': 2018,
-        #     'normal_sequencer': 'novoseq',
-        #     'normal_id': 'n_sample',
-        #     'normal_uuid': 'n_uuid_uuid',
-        #     'donor_uuid': 'd_uuid-uuid'
-        # }
-
         output_metrics_file = os.path.join(temp_dir, 'ppcg_sanger_metrics.txt')
         genotyping_files = []
 
@@ -194,8 +192,9 @@ def extract_from_sanger(args):
             o.write('\t'.join(header) + '\n')
 
             for t_n_pair, v_tar in t_n_pair_tar.items():
-                print('meta:', t_n_pair_meta[t_n_pair])
-                extractor = SangerQcMetricsExtractor(t_name_bas[t_n_pair[0]], n_name_bas[t_n_pair[1]], genome_size, v_tar, temp_dir, count_variants, t_n_pair_meta[t_n_pair])
+                logger.info('processing sanger call tar: %s', v_tar)
+                logger.debug('processing sanger call tar: %s, tumour: %s, normal: %s, genome_size: %s, count_v: %s, meta_data: %s', v_tar, t_name_bas[t_n_pair[0]], n_name_bas[t_n_pair[1]], genome_size, count_variants, json.dumps(t_n_pair_meta.get(t_n_pair, {})))
+                extractor = SangerQcMetricsExtractor(t_name_bas[t_n_pair[0]], n_name_bas[t_n_pair[1]], genome_size, v_tar, temp_dir, count_variants, t_n_pair_meta.get(t_n_pair, None))
                 o.write('\t'.join(extractor.get_metrics()) + '\n')
                 genotyping_files.extend(extractor.get_genotyping_files())
                 extractor.clean_output_dir()
@@ -212,34 +211,42 @@ def extract_from_sanger(args):
     logger.info('completed')
 
 
+def append_to_file_path_list(a_path, path_list):
+    if a_path in path_list:
+        logger.warning(f'Duplicated input of a file: {a_path}, skip.')
+    else:
+        path_list.append(a_path)
+    return path_list
+
+
 def get_all_bas(input_abs: List[str]):
     to_return = []
     for path in input_abs:
-        check_file_exists(path)
+        check_file_exists_for_user(path, logger)
         if os.path.isdir(path):
-            logger.debug('%s is a directory, will take all BAS files in the folder, but not any file in a sub directory.', path)
-            for a_file in os.listdir(path):
-                if not os.path.isdir(a_file) and re.match(r'.+\.bam\.bas$', a_file):
+            logger.warning('%s is a directory, will take all BAS files in the folder, but not any file in a sub directory.', path)
+            for a_file in os.scandir(path):
+                if os.path.isfile(a_file) and re.match(r'.+\.bam\.bas$', a_file.name):
                     SangerQcMetricsExtractor.validate_bas(a_file)
-                    to_return.append(get_abs_path(a_file))
+                    to_return = append_to_file_path_list(os.path.abspath(a_file), to_return)
         else:
             SangerQcMetricsExtractor.validate_bas(path)
-            to_return.append(get_abs_path(path))
+            to_return = append_to_file_path_list(os.path.abspath(path), to_return)
     return to_return
 
 
 def get_all_variant_call_tar(input_call_tars: List[str]):
     to_return = []
     for path in input_call_tars:
-        check_file_exists(path)
+        check_file_exists_for_user(path, logger)
         if os.path.isdir(path):
-            logger.debug('%s is a directory, will take all tar.gz files in the folder, but not any file in a sub directory.', path)
-            for a_file in os.listdir(path):
-                if not os.path.isdir(a_file) and re.match(r'\.tar.gz$', a_file):
-                    to_return.append(get_abs_path(a_file))
+            logger.warning('%s is a directory, will take all tar.gz files in the folder, but not any file in a sub directory.', path)
+            for a_file in os.scandir(path):
+                if os.path.isfile(a_file) and re.match(r'.+\.tar\.gz$', a_file.name):
+                    to_return = append_to_file_path_list(os.path.abspath(a_file), to_return)
         else:
             SangerQcMetricsExtractor.validate_tar_name(path)
-            to_return.append(get_abs_path(path))
+            to_return = append_to_file_path_list(os.path.abspath(path), to_return)
     return to_return
 
 
@@ -269,7 +276,7 @@ def get_all_t_n_pairs(variant_call_tars) -> Dict[Tuple[str, str], str]:
     for a_tar in variant_call_tars:
         t_name = n_name = None
         with tarfile.open(a_tar, 'r:gz') as tar:
-            logger.info('getting file list info from tar file %s', a_tar)
+            logger.info('validating tar file %s', a_tar)
             all_files = tar.getmembers()
             for a_file in all_files:
                 matches = re.match(r'^WGS_([\w\-]+)_vs_([\w\-]+)$', a_file.name)
@@ -294,14 +301,14 @@ def get_sample_names_bas_file_dict(bas_list):
 def get_all_meta(metadata_paths): 
     to_return = []
     for path in metadata_paths:
-        check_file_exists(path)
+        check_file_exists_for_user(path, logger)
         if os.path.isdir(path):
-            logger.debug('%s is a directory, will take all tsv files in the folder, but not any file in a sub directory.', path)
-            for a_file in os.listdir(path):
-                if not os.path.isdir(a_file) and re.match(r'.+\.tsv$', a_file):
-                    to_return.append(get_abs_path(a_file))
+            logger.warning('%s is a directory, will take all tsv files in the folder, but not any file in a sub directory.', path)
+            for a_file in os.scandir(path):
+                if os.path.isfile(a_file) and re.match(r'.+\.tsv$', a_file.name):
+                    to_return = append_to_file_path_list(os.path.abspath(a_file), to_return)
         else:
-            to_return.append(get_abs_path(path))
+            to_return = append_to_file_path_list(os.path.abspath(path), to_return)
     return to_return
 
 
@@ -310,26 +317,34 @@ def get_t_n_pair_meta(sample_id_meta, sample_uuid_meta, t_n_pairs: List[str]) ->
     to_return = {}
 
     for tumour, normal in t_n_pairs:
-        t_dict = sample_uuid_meta.get(tumour, {})
+        # make sure it's a new copy
+        t_dict = {**sample_uuid_meta.get(tumour, {})}
         if not t_dict:
-            t_dict = sample_id_meta.get(tumour, {})
+            t_dict = {**sample_id_meta.get(tumour, {})}
 
-        n_dict = sample_uuid_meta.get(normal, {})
+        # make sure it's a new copy
+        n_dict = {**sample_uuid_meta.get(normal, {})}
         if not n_dict:
-            n_dict = sample_id_meta.get(normal, {})
+            n_dict = {**sample_id_meta.get(normal, {})}
 
-        to_return[(tumour, normal)] = {
-            PPCG_META_TO_EXTRACTOR_MAP['donor_id']: t_dict.get('donor_id', None),
-            PPCG_META_TO_EXTRACTOR_MAP['donor_uuid']: t_dict.get('donor_uuid', None),
-            PPCG_META_TO_EXTRACTOR_MAP['sequencer'][0]: t_dict.get('sequencer', None),
-            PPCG_META_TO_EXTRACTOR_MAP['sequencing_year'][0]: t_dict.get('sequencing_year', None),
-            PPCG_META_TO_EXTRACTOR_MAP['sample_id'][0]: t_dict.get('sample_id', None),
-            PPCG_META_TO_EXTRACTOR_MAP['sample_uuid'][0]: t_dict.get('sample_uuid', None),
-            PPCG_META_TO_EXTRACTOR_MAP['sequencer'][1]: n_dict.get('sequencer', None),
-            PPCG_META_TO_EXTRACTOR_MAP['sequencing_year'][1]: n_dict.get('sequencing_year', None),
-            PPCG_META_TO_EXTRACTOR_MAP['sample_id'][1]: n_dict.get('sample_id', None),
-            PPCG_META_TO_EXTRACTOR_MAP['sample_uuid'][1]: n_dict.get('sample_uuid', None)
-        }
+        tmp_dict = {}
+        for a_key in ['donor_id', 'donor_uuid']:
+            n_dict.pop(a_key, None)
+            if a_key in t_dict:
+                tmp_dict[PPCG_META_TO_EXTRACTOR_MAP[a_key]] = t_dict.pop(a_key)
+
+        tmp_dict.update({
+            PPCG_META_TO_EXTRACTOR_MAP[a_key][0]: t_dict.get(a_key)
+            for a_key in t_dict
+        })
+        tmp_dict.update({
+            PPCG_META_TO_EXTRACTOR_MAP[a_key][1]: n_dict.get(a_key)
+            for a_key in n_dict
+        })
+
+        if tmp_dict:
+            to_return[(tumour, normal)] = tmp_dict
+
     return to_return
 
 
@@ -342,19 +357,20 @@ def get_sample_meta(meta_files) -> Tuple[Dict[str, dict], Dict[str, dict]]:
 
     for meta_file in meta_files:
         with open(meta_file, 'r') as meta:
+            logger.debug('processing metadata file: %s...', meta_file)
             sample_id_index  = sample_uuid_index = None
             lower_case_header = [ele.lower() for ele in meta.readline().split('\t')]
             try:
-                sample_id_index = lower_case_header.index('Sample_ID')
+                sample_id_index = lower_case_header.index('sample_id')
             except ValueError:
                 logger.warning('can not find Sample_ID column in input meta: %s', meta_file)
 
             try:
-                sample_id_index = lower_case_header.index('Sample_UUID')
+                sample_id_index = lower_case_header.index('sample_uuid')
             except ValueError:
                 logger.warning('can not find Sample_UUID column in input meta: %s', meta_file)
 
-            if not any(sample_id_index, sample_uuid_index):
+            if not any([sample_id_index, sample_uuid_index]):
                 logger.critical('can not find Sample_ID or Sample_UUID column in input meta: %s', meta_file)
                 sys.exit(1)
 
@@ -363,12 +379,14 @@ def get_sample_meta(meta_files) -> Tuple[Dict[str, dict], Dict[str, dict]]:
                 valid_dict = get_valid_meta_dict(lower_case_header, line_split)
                 if sample_id_index:
                     sample_id = line_split[sample_id_index]
+                    logger.debug('found metadata for sample id: %s, valid meta: \n%s', sample_id, json.dumps(valid_dict))
                     if sample_id in sample_id_meta:
                         logger.critical('duplicated sample_id: %s is found in: %s', sample_id, meta_file)
                         sys.exit(1)
                     sample_id_meta[sample_id] = valid_dict
                 if sample_uuid_index:
                     sample_uuid = line_split[sample_uuid_index]
+                    logger.debug('found metadata for sample id: %s, valid meta: \n%s', sample_uuid, json.dumps(valid_dict))
                     if sample_uuid in sample_uuid_meta:
                         logger.critical('duplicated sample_uuid: %s is found in: %s', sample_uuid, meta_file)
                         sys.exit(1)
