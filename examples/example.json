@@ -1,16 +1,16 @@
 {
-  "tumour_bas": {
+  "tumour_bas": [{
     "class": "File",
     "path": "https://github.com/cancerit/ppcg-qc-from-sanger/raw/develop/tests/data/tumour_sample.bam.bas"
-  },
-  "normal_bas": {
+  }],
+  "normal_bas": [{
     "class": "File",
     "path": "https://github.com/cancerit/ppcg-qc-from-sanger/raw/develop/tests/data/normal_sample.bam.bas"
-  },
-  "cgpwgs_result_tar": {
+  }],
+  "cgpwgs_result_tar": [{
     "class": "File",
     "path": "https://github.com/cancerit/ppcg-qc-from-sanger/raw/develop/tests/data/test.tar.gz"
-  },
+  }],
   "count_variants": true,
   "result_tar": {
     "class": "File",
