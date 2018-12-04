@@ -10,3 +10,4 @@ htmlcov/
 /dist
 /ppcg_qc_from_sanger.egg-info
 .pytest_cache/
+.vscode
