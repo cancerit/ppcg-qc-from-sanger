@@ -35,11 +35,11 @@ inputs:
   normal_bas:
     type:
       type: array
-        items: File
-        inputBinding:
-          prefix: -nb
-          shellQuote: true
-          separate: true
+      items: File
+      inputBinding:
+        prefix: -nb
+        shellQuote: true
+        separate: true
     doc: "normal sample BAS file from cgpmap pipeline"
 
   metadata:
@@ -56,11 +56,11 @@ inputs:
   cgpwgs_result_tar:
     type:
       type: array
-        items: File
-        inputBinding:
-          prefix: -rt
-          shellQuote: true
-          separate: true
+      items: File
+      inputBinding:
+        prefix: -rt
+        shellQuote: true
+        separate: true
     doc: "variant calling results tar file from cgpwgs"
 
   output_tar_name:
