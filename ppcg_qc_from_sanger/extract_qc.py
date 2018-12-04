@@ -119,7 +119,7 @@ VARIANT_COUNT_HEADER = [
 PPCG_META_TO_EXTRACTOR_MAP = {
     'donor_id': 'donor_id',
     'donor_uuid': 'donor_uuid',
-    'sequencer': ['tumour_sequencing_year', 'normal_sequencing_year'],
+    'sequencer': ['tumour_sequencer', 'normal_sequencer'],
     'sequencing_year': ['tumour_sequencing_year', 'normal_sequencing_year'],
     'sample_id': ['tumour_id', 'normal_id'],
     'sample_uuid': ['tumour_uuid', 'normal_uuid']
@@ -365,7 +365,7 @@ def get_sample_meta(meta_files) -> Tuple[Dict[str, dict], Dict[str, dict]]:
         with open(meta_file, 'r') as meta:
             logger.debug('processing metadata file: %s...', meta_file)
             sample_id_index = sample_uuid_index = None
-            lower_case_header = [ele.lower() for ele in meta.readline().split('\t')]
+            lower_case_header = [ele.lower() for ele in meta.readline().rstrip().split('\t')]
             try:
                 sample_id_index = lower_case_header.index('sample_id')
             except ValueError:
@@ -381,7 +381,7 @@ def get_sample_meta(meta_files) -> Tuple[Dict[str, dict], Dict[str, dict]]:
                 sys.exit(1)
 
             for line in meta:
-                line_split = line.split('\t')
+                line_split = line.rstrip().split('\t')
                 valid_dict = get_valid_meta_dict(lower_case_header, line_split)
                 if sample_id_index:
                     sample_id = line_split[sample_id_index]
