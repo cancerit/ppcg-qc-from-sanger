@@ -24,21 +24,21 @@ def main():
         '-tb', '--tumour_bas',
         dest='tumour_bas',
         metavar='FILE|DIRECTORY',
-        help='Tumour sample BAS file (.bam.bas) from cgpmap pipeline.',
+        help='Tumour sample BAS files (.bam.bas) or directories containing the files. Multiple entries should be separated by a space.',
         nargs='+',
         required=True)
     parser.add_argument(
         '-nb', '--normal_bas',
         dest='normal_bas',
         metavar='FILE|DIRECTORY',
-        help='Normal sample BAS file (.bam.bas) from cgpmap pipeline.',
+        help='Normal sample BAS files (.bam.bas) or directories containing the files. Multiple entries should be separated by a space.',
         nargs='+',
         required=True)
     parser.add_argument(
         '-rt', '--variant_call_tar',
         dest='variant_call_tar',
         metavar='FILE|DIRECTORY',
-        help='The compressed tar result file from cgpwgs variant calling pipeline of the two samples, requires ".tar.gz" extension.',
+        help='The compressed tar result files from cgpwgs variant calling pipeline of the two samples, or directories containing the files. Multiple entries should be separated by a space.',
         nargs='+',
         required=True)
     parser.add_argument(
@@ -58,11 +58,11 @@ def main():
         '-mt', '--metadata',
         dest='metadata',
         metavar='FILE|DIRECTORY',
-        help='CgpNgsQC validate_sample_meta.pl output tsv file(s), with extra optional columns: "Sequencing Year" and "Sequencer"',
+        help='CgpNgsQC validate_sample_meta.pl output tsv file(s), or directories containing the files. A metadata file can have extra optional columns: "Sequencing_Year" and "Sequencer". Multiple entries should be separated by a space.',
         nargs='+')
     parser.add_argument(
         '-cv', '--count_variants',
-        action='store_true', help='write number of SNVs, INDELs, SVs and CNVs in the tumour sample to the output.')
+        action='store_true', help='count number of SNVs, INDELs, SVs and CNVs.')
     parser.add_argument(
         '-d', '--debug',
         action='store_true', help='print more info for debug.')
