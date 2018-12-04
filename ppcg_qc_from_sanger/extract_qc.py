@@ -134,28 +134,10 @@ def extract_from_sanger(args):
         logger.setLevel(logging.INFO)
         set_extractor_logger_level(logging.INFO)
 
+    check_paras(args)
+
     genome_size = args.genome_size
-    if not isinstance(genome_size, int):
-        logger.critical('genome_size is not int')
-        sys.exit(1)
-
     output_tar = os.path.abspath(args.output_tar)
-    # if tar file has '.tar.gz' extension
-    SangerQcMetricsExtractor.validate_tar_name(output_tar)
-
-    # test if output is writable
-    if not os.path.exists(output_tar):
-        try:
-            with open(output_tar, 'w') as out:
-                out.write('place holder\n')
-        except OSError as exc:
-            logger.critical('output is not writable: %s.', str(exc))
-            sys.exit(1)
-        finally:
-            os.remove(output_tar)
-    else:
-        logger.critical('existing output file: %s.', output_tar)
-        sys.exit(1)
 
     logger.info('checking tumour BAS file(s)..')
     tumour_bas = get_all_bas(args.tumour_bas)
@@ -209,6 +191,30 @@ def extract_from_sanger(args):
             logger.critical('failed to create the final output: %s', str(exc))
             sys.exit(1)
     logger.info('completed')
+
+
+def check_paras(args):
+    if not isinstance(args.genome_size, int):
+        logger.critical('genome_size is not int')
+        sys.exit(1)
+
+    output_tar = os.path.abspath(args.output_tar)
+    # if tar file has '.tar.gz' extension
+    SangerQcMetricsExtractor.validate_tar_name(output_tar)
+
+    # test if output is writable
+    if not os.path.exists(output_tar):
+        try:
+            with open(output_tar, 'w') as out:
+                out.write('place holder\n')
+        except OSError as exc:
+            logger.critical('output is not writable: %s.', str(exc))
+            sys.exit(1)
+        finally:
+            os.remove(output_tar)
+    else:
+        logger.critical('existing output file: %s.', output_tar)
+        sys.exit(1)
 
 
 def append_to_file_path_list(a_path, path_list):
