@@ -23,13 +23,11 @@ RUN echo 'gem: --no-document' > /etc/gemrc
 # Install ruby requirement for parsing markdown files
 RUN gem install mdl
 
-WORKDIR $HOME
-COPY requirements.txt ./
-RUN pip install -r requirements.txt
-
 # Clear out alpine linux build dependencies
 RUN apk del build-deps
 
+
+WORKDIR $HOME
 # Copy over source code
 COPY . .
 

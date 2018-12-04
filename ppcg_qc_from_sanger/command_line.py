@@ -6,7 +6,6 @@ import argparse
 import sys
 import pkg_resources  # part of setuptools
 import os.path
-
 from ppcg_qc_from_sanger.extract_qc import extract_from_sanger
 
 version = pkg_resources.require("ppcg-qc-from-sanger")[0].version
@@ -24,20 +23,23 @@ def main():
     parser.add_argument(
         '-tb', '--tumour_bas',
         dest='tumour_bas',
-        metavar='FILE',
-        help='Tumour sample BAS file (.bam.bas) from cgpmap pipeline.',
+        metavar='FILE|DIRECTORY',
+        action='append',
+        help='Tumour sample BAS files (.bam.bas) or directories containing the files. Multiple entries should be separated by a space.',
         required=True)
     parser.add_argument(
         '-nb', '--normal_bas',
         dest='normal_bas',
-        metavar='FILE',
-        help='Normal sample BAS file (.bam.bas) from cgpmap pipeline.',
+        metavar='FILE|DIRECTORY',
+        action='append',
+        help='Normal sample BAS files (.bam.bas) or directories containing the files. Multiple entries should be separated by a space.',
         required=True)
     parser.add_argument(
         '-rt', '--variant_call_tar',
         dest='variant_call_tar',
-        metavar='FILE',
-        help='The compressed tar result file from cgpwgs variant calling pipeline of the two samples, requires ".tar.gz" extension.',
+        metavar='FILE|DIRECTORY',
+        action='append',
+        help='The compressed tar result files from cgpwgs variant calling pipeline of the two samples, or directories containing the files. Multiple entries should be separated by a space.',
         required=True)
     parser.add_argument(
         '-o', '--output_tar',
@@ -53,8 +55,14 @@ def main():
         help='The genome size, default to GRCh37 size, which is 3,137,454,505.',
         default=3137454505)
     parser.add_argument(
+        '-mt', '--metadata',
+        dest='metadata',
+        metavar='FILE|DIRECTORY',
+        help='CgpNgsQC validate_sample_meta.pl output tsv file(s), or directories containing the files. A metadata file can have extra optional columns: "Sequencing_Year" and "Sequencer". Multiple entries should be separated by a space.',
+        action='append')
+    parser.add_argument(
         '-cv', '--count_variants',
-        action='store_true', help='write number of SNVs, INDELs, SVs and CNVs in the tumour sample to the output.')
+        action='store_true', help='count number of SNVs, INDELs, SVs and CNVs.')
     parser.add_argument(
         '-d', '--debug',
         action='store_true', help='print more info for debug.')

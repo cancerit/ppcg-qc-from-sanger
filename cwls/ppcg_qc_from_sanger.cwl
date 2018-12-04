@@ -23,31 +23,45 @@ requirements:
 
 inputs:
   tumour_bas:
-    type: File
+    type:
+      type: array
+      items: File
+      inputBinding:
+        prefix: -tb
+        shellQuote: true
+        separate: true
     doc: "tumour sample BAS file from cgpmap pipeline"
-    inputBinding:
-      prefix: -tb
-      position: 1
-      separate: true
-      shellQuote: true
 
   normal_bas:
-    type: File
+    type:
+      type: array
+      items: File
+      inputBinding:
+        prefix: -nb
+        shellQuote: true
+        separate: true
     doc: "normal sample BAS file from cgpmap pipeline"
-    inputBinding:
-      prefix: -nb
-      position: 2
-      separate: true
-      shellQuote: true
+
+  metadata:
+    type:
+      - "null"
+      - type: array
+        items: File
+        inputBinding:
+          prefix: -mt
+          shellQuote: true
+          separate: true
+    doc: "metadata files"
 
   cgpwgs_result_tar:
-    type: File
+    type:
+      type: array
+      items: File
+      inputBinding:
+        prefix: -rt
+        shellQuote: true
+        separate: true
     doc: "variant calling results tar file from cgpwgs"
-    inputBinding:
-      prefix: -rt
-      position: 3
-      separate: true
-      shellQuote: true
 
   output_tar_name:
     type: string
