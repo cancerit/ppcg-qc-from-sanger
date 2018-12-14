@@ -7,6 +7,7 @@ import logging
 import json
 import re
 import gzip
+from statistics import median
 from tempfile import TemporaryDirectory
 from . import exec_subp_and_wait, check_file_exists, format_float
 from typing import Dict, List, Any
@@ -27,6 +28,12 @@ logger.setLevel(logging.DEBUG)
 def set_extractor_logger_level(logging_level):
     global logger
     logger.setLevel(logging_level)
+
+
+def join_and_median(a_list):
+    return ','.join(
+        [format_float(a_number) for a_number in a_list]
+    ), format_float(median(a_list))
 
 
 class SangerQcMetricsExtractor(object):
@@ -209,9 +216,12 @@ class SangerQcMetricsExtractor(object):
 
         if self.count_variants:
             # count variants
-            to_return.extend(
-                [self.get_snv_count(), self.get_indel_count(), self.get_sv_count(), self.get_cnv_count()]
-            )
+            to_return.extend([
+                '\t'.join(self.get_snv_count()),
+                '\t'.join(self.get_indel_count()),
+                '\t'.join(self.get_sv_count()),
+                self.get_cnv_count()
+            ])
 
         return to_return
 
@@ -272,22 +282,25 @@ class SangerQcMetricsExtractor(object):
     def get_sv_count(self):
         extracted_sv_file = self.extracted_files['variants']['sv']
         check_file_exists(extracted_sv_file)
-        count_filtered, return_code = exec_subp_and_wait(
-            f'gunzip -c {extracted_sv_file}  | grep -v \'#\' | grep -c \'BAS=\'')
-        # when no pattern is found, grep exit 1 but it should be a expected behavior
-        if return_code == 1 and count_filtered != '0':
-            raise RuntimeError(f"Subprocess failed with return code {return_code}!")
 
-        count_all, return_code = exec_subp_and_wait(
-            f'gunzip -c {extracted_sv_file}  | grep -c -v \'#\'')
-        # when no pattern is found, grep exit 1 but it should be a expected behavior
-        if return_code == 1 and count_all != '0':
-            raise RuntimeError(f"Subprocess failed with return code {return_code}!")
+        sv_per_chr = {}
+        with gzip.open(extracted_sv_file, 'rt') as v:
+            for line in v:
+                if not line.startswith('#'):
+                    ele = line.rstrip('\n').split('\t')
+                    if not ele[0] in sv_per_chr:
+                        sv_per_chr[ele[0]] = [0, 0]
+                    sv_per_chr[ele[0]][1] += 1
+                    if re.search(r'BAS=', ele[7]):
+                        sv_per_chr[ele[0]][0] += 1
+
+        count_filtered = sum([n[0] for n in sv_per_chr.values()])
+        count_all = sum([n[1] for n in sv_per_chr.values()])
 
         if int(count_all) % 2 != 0 or int(count_filtered) % 2 != 0:
             raise RuntimeError('counted BRASS calls returns an odd number.')
-        # integer devision
-        return f'{str(int(count_filtered)//2)}/{str(int(count_all)//2)}'
+        # integer devision 
+        return f'{str(int(count_filtered)//2)}/{str(int(count_all)//2)}', json.dumps({k:[n/2 for n in v] for k,v in sv_per_chr.items()})
 
     def get_cnv_count(self):
         extracted_cnv_file = self.extracted_files['variants']['cnv']
@@ -368,9 +381,9 @@ class SangerQcMetricsExtractor(object):
     def get_mapping_rate_from_bas(bas_content):
         mapped_reads = [int(rg[SangerQcMetricsExtractor.BAS_HEADER.index('#_mapped_reads')]) for rg in bas_content]
         total_reads = [int(rg[SangerQcMetricsExtractor.BAS_HEADER.index('#_total_reads')]) for rg in bas_content]
-        return ','.join(
-                [format_float(m_read/t_read) for m_read, t_read in zip(mapped_reads, total_reads)]
-            ), format_float(sum(mapped_reads)/sum(total_reads))
+        return join_and_median(
+            [m_read/t_read for m_read, t_read in zip(mapped_reads, total_reads)]
+        )
 
     def get_tumour_mapping_rate(self):
         return self.get_mapping_rate_from_bas(self.t_bas_content)
@@ -381,7 +394,7 @@ class SangerQcMetricsExtractor(object):
     @staticmethod
     def get_insert_sizes_from_bas(bas_content):
         insert_sizes = [float(rg[SangerQcMetricsExtractor.BAS_HEADER.index('mean_insert_size')]) for rg in bas_content]
-        return ','.join([format_float(ins) for ins in insert_sizes]), format_float(sum(insert_sizes)/len(insert_sizes))
+        return join_and_median(insert_sizes)
 
     def get_tumour_insert_sizes(self):
         return self.get_insert_sizes_from_bas(self.t_bas_content)
@@ -392,7 +405,7 @@ class SangerQcMetricsExtractor(object):
     @staticmethod
     def get_insert_size_sds_from_bas(bas_content):
         insert_size_sds = [float(rg[SangerQcMetricsExtractor.BAS_HEADER.index('insert_size_sd')]) for rg in bas_content]
-        return ','.join([format_float(insd) for insd in insert_size_sds]), format_float(sum(insert_size_sds)/len(insert_size_sds))
+        return join_and_median(insert_size_sds)
 
     def get_tumour_insert_size_sds(self):
         return self.get_insert_size_sds_from_bas(self.t_bas_content)
@@ -416,16 +429,14 @@ class SangerQcMetricsExtractor(object):
             bas_len_index = SangerQcMetricsExtractor.BAS_HEADER.index('read_length_r2')
 
         r_gc_bs = [int(rg[bas_gc_index]) for rg in bas_content]
-        total_r_gc_b = sum(r_gc_bs)
         r_bs = [
                 int(rg[bas_tb_index]) * int(rg[bas_len_index])
                 for rg in bas_content
             ]
-        total_r_b = sum(r_bs)
 
-        return ','.join(
-            [format_float(r_gc_b/r_b) for r_gc_b, r_b in zip(r_gc_bs, r_bs)]
-        ), format_float(total_r_gc_b/total_r_b)
+        return join_and_median(
+            [r_gc_b/r_b for r_gc_b, r_b in zip(r_gc_bs, r_bs)]
+        )
 
     def get_tumour_gc_r1(self):
         return self.get_gc_from_bas(self.t_bas_content)
@@ -442,13 +453,11 @@ class SangerQcMetricsExtractor(object):
     @staticmethod
     def get_duplicate_r_rate_from_bas(bas_content):
         duplicate_reads = [int(rg[SangerQcMetricsExtractor.BAS_HEADER.index('#_duplicate_reads')]) for rg in bas_content]
-        total_duplicate_reads = sum(duplicate_reads)
         reads = [int(rg[SangerQcMetricsExtractor.BAS_HEADER.index('#_total_reads')]) for rg in bas_content]
-        total_reads = sum(reads)
 
-        return ','.join(
-            [format_float(d_r/r) for d_r, r in zip(duplicate_reads, reads)]
-        ), format_float(total_duplicate_reads/total_reads)
+        return join_and_median(
+            [d_r/r for d_r, r in zip(duplicate_reads, reads)]
+        )
 
     def get_tumour_duplicate_r_rate(self):
         return self.get_duplicate_r_rate_from_bas(self.t_bas_content)
@@ -459,12 +468,11 @@ class SangerQcMetricsExtractor(object):
     @staticmethod
     def get_mismatched_pair_rate_from_bas(bas_content):
         mapped_pairs = [int(rg[SangerQcMetricsExtractor.BAS_HEADER.index('#_mapped_pairs')]) for rg in bas_content]
-        total_mapped_pairs = sum(mapped_pairs)
         pairs = [int(rg[SangerQcMetricsExtractor.BAS_HEADER.index('#_total_reads_r1')]) for rg in bas_content]
-        total_pairs = sum(pairs)
-        return ','.join(
-            [format_float(1-(m_p/p)) for m_p, p in zip(mapped_pairs, pairs)]
-        ), format_float(1-(total_mapped_pairs/total_pairs))
+
+        return join_and_median(
+            [1-(m_p/p) for m_p, p in zip(mapped_pairs, pairs)]
+        )
 
     def get_tumour_mismatched_pair_rate(self):
         return self.get_mismatched_pair_rate_from_bas(self.t_bas_content)
@@ -504,20 +512,21 @@ class SangerQcMetricsExtractor(object):
 
     @staticmethod
     def get_v_count(v_file):
-        check_file_exists(v_file)
-        count_filtered, return_code = exec_subp_and_wait(
-            f'gunzip -c {v_file} | grep -c "\tPASS\t"')
-        # when no pattern is found, grep exit 1 but it should be a expected behavior
-        if return_code == 1 and count_filtered != '0':
-            raise RuntimeError(f"Subprocess failed with return code {return_code}!")
+        count_per_chr={}
+        with gzip.open(v_file, 'rt') as v:
+            for line in v:
+                if not line.startswith('#'):
+                    ele = line.rstrip('\n').split('\t')
+                    if ele[0] not in count_per_chr:
+                        count_per_chr[ele[0]] = [0, 0]
 
-        count_all, return_code = exec_subp_and_wait(
-            f'gunzip -c {v_file} | grep -c -v \'#\'')
-        # when no pattern is found, grep exit 1 but it should be a expected behavior
-        if return_code == 1 and count_all != '0':
-            raise RuntimeError(f"Subprocess failed with return code {return_code}!")
+                    count_per_chr[ele[0]][1] += 1
+                    if ele[6] == 'PASS':
+                        count_per_chr[ele[0]][0] += 1
+        count_filtered = sum([c_t[0] for c_t in count_per_chr.values()])
+        count_all = sum([c_t[1] for c_t in count_per_chr.values()])
 
-        return f'{count_filtered}/{count_all}'
+        return f'{count_filtered}/{count_all}', json.dumps(count_per_chr)
 
     @staticmethod
     def get_contamination_from_file(rg_ids, con_file, sample_name):
@@ -526,13 +535,14 @@ class SangerQcMetricsExtractor(object):
         except Exception as exc:
             raise RuntimeError('can not load to dict: %s' % str(exc))
         try:
-            con = con_dict[sample_name]['contamination']
             contamination_per_lane = []
             for rg_id in rg_ids:
-                contamination_per_lane.append(con_dict[sample_name]['by_readgroup'][rg_id]['contamination'])
+                contamination_per_lane.append(float(con_dict[sample_name]['by_readgroup'][rg_id]['contamination']))
         except Exception as exc:
             raise RuntimeError('can not find contamination value: %s' % str(exc))
-        return ','.join([str(cpl) for cpl in contamination_per_lane]), con
+
+        # the contaminations can be really small (eg: 0.00000001), thus not a good idea to use format_float
+        return ','.join([str(cpl) for cpl in contamination_per_lane]), str(median(contamination_per_lane))
 
     def get_tumour_contamination(self):
         return self.get_contamination_from_file(self.t_rg_ids, self.extracted_files['contamination'][0], self.t_sample_name)
