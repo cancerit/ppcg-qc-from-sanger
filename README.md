@@ -57,21 +57,21 @@ A tsv file containing the following columns:
 1. **Tumour depth per RG**: Total mapped bases (number of mapped reads * read length) divided by the genome size per RG.
 1. **Tumour total depth**: Total depth.
 1. **Tumour fraction of mapped reads per RG**: Number of mapped reads divided by the number of total reads per RG.
-1. **Tumour mean fraction of mapped reads**: Mean fraction of mapped reads for the sample.
+1. **Tumour median fraction of mapped reads**: Median fraction of mapped reads for the sample.
 1. **Tumour insert size per RG**:  Mean insert size per RG.
-1. **Tumour mean Insert size**: Mean of mean insert size.
+1. **Tumour median Insert size**: Median of mean insert size.
 1. **Tumour insert size sd per RG**: Insert size standard deviation per RG.
-1. **Tumour mean insert size sd**: Mean of the insert size standard deviations.
+1. **Tumour median insert size sd**: Median of the insert size standard deviations.
 1. **Tumour r1 GC content per RG**: GC base content of all read 1 in read pairs per RG.
-1. **Tumour mean r1 GC content**: Mean r1 GC base content for the sample.
+1. **Tumour median r1 GC content**: Median r1 GC base content for the sample.
 1. **Tumour r2 GC content per RG**: GC base content of all read 2 in read pairs per RG.
-1. **Tumour mean r2 GC content**: Mean r2 GC base content for the sample.
+1. **Tumour median r2 GC content**: Median r2 GC base content for the sample.
 1. **Tumour fraction of duplicated reads per RG**: Number of duplicated reads divided by the number of total reads per RG.
-1. **Tumour mean fraction of duplicated reads**: Mean fraction of duplicated reads for the sample.
+1. **Tumour median fraction of duplicated reads**: Median fraction of duplicated reads for the sample.
 1. **Tumour fraction of mis-matched pairs per RG**: 1 minus the fraction of mapped pairs in total read pairs per RG.
-1. **Tumour mean fraction of mis-matched pairs**: Mean mismatch fraction.
+1. **Tumour median fraction of mis-matched pairs**: Median mismatch fraction.
 1. **Tumour contamination per RG**: Cross individual contamination per RG.
-1. **Tumour mean contamination**: Mean cross individual contamination for the sample.
+1. **Tumour median contamination**: Median cross individual contamination for the sample.
 1. **Tumour sex**: Deduced sex from genotypes of 4 SNPs on sex chromosomes.
 1. **Tumour fraction of matched sex with Normal**: Fraction of the 4 SNPs on sex chromosomes that have matched genotypes in the normal sample.
 1. **Tumour fraction of matched genotype with Normal**: Fraction of 92 autosome SNPs that have matched genotypes in the normal sample
@@ -85,29 +85,32 @@ A tsv file containing the following columns:
 1. **Normal depth per RG**:
 1. **Normal total depth**:
 1. **Normal fraction of mapped reads per RG**:
-1. **Normal mean fraction of mapped reads**:
+1. **Normal median fraction of mapped reads**:
 1. **Normal insert size per RG**:
-1. **Normal mean Insert size**:
+1. **Normal median Insert size**:
 1. **Normal insert size sd per RG**:
-1. **Normal mean insert size sd**:
+1. **Normal median insert size sd**:
 1. **Normal r1 GC content per RG**:
-1. **Normal mean r1 GC content**:
+1. **Normal median r1 GC content**:
 1. **Normal r2 GC content per RG**:
-1. **Normal mean r2 GC content**:
+1. **Normal median r2 GC content**:
 1. **Normal fraction of duplicated reads per RG**:
-1. **Normal mean fraction of duplicated reads**:
+1. **Normal median fraction of duplicated reads**:
 1. **Normal fraction of mis-matched pairs per RG**:
-1. **Normal mean fraction of mis-matched pairs**:
+1. **Normal median fraction of mis-matched pairs**:
 1. **Normal contamination per RG**:
-1. **Normal mean contamination**:
+1. **Normal median contamination**:
 1. **Donor ID**: `Donor_ID` in the metadata, if provided.
 1. **Donor UUID**: `Donor_UUID` in the metadata, if provided.
 
 Additional columns if uses `--count_variants` flag:
 
-1. **Number of SNVs** (tumour only): number of 'PASS'ed variants in the CAVEMAN flagged VCF output `/` all variants in the file
-1. **Number of INDELs** (tumour only): number of 'PASS'ed variants in the PINDEL flagged VCF output `/` all variants in the file
-1. **Number of SVs** (tumour only): number of variants with 'BAS' info tag in the BRASS VCF output, devided by 2 `/` all variants in the file devided by 2 *(in the VCF, one SV is recorded with two rows)*
+1. **Number of SNVs** (tumour only): the number of 'PASS'ed variants in the CAVEMAN flagged VCF output `/` all variants in the file
+1. **SNVs per Chr (chromosome:[PASS, ALL])** (tumour only): JSON format string: keys are chromosome names, values are lists consisting of the number of 'PASS'ed SNVs and the number of all SNVs.
+1. **Number of INDELs** (tumour only): the number of 'PASS'ed variants in the PINDEL flagged VCF output `/` all variants in the file
+1. **INDELs per Chr (chromosome:[PASS, ALL])** (tumour only): JSON format string: keys are chromosome names, values are lists consisting of the number of 'PASS'ed INDELs and the number of all INDELs.
+1. **Number of SVs** (tumour only): the number of variants with 'BAS' info tag in the BRASS VCF output, devided by 2 `/` all variants in the file devided by 2 *(in the VCF, one SV is recorded with two rows)*
+1. **SVs per Chr (chromosome:[PASS, ALL])** (tumour only): JSON format string: keys are chromosome names, values are lists consisting of the number of variants with 'BAS' info tag in the BRASS VCF output, devided by 2 and all variants in the file devided by 2.
 1. **Number of CNVs** (tumour only): number of variants which have different copy numbers between Normal and Tumour sample in the ASCAT VCF output
 
 ### `.tsv` genotyping files
