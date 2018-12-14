@@ -1,5 +1,10 @@
 # Changes
 
+## 0.4.0
+
+* mean values are changed to median values;
+* added per chromosome variants count in the metrics output
+
 ## 0.3.0
 
 * added per read group info in the output;
