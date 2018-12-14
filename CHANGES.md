@@ -1,5 +1,10 @@
 # Changes
 
+## 0.4.1
+
+* corrected installation method in README
+* corrected version number in setup.py
+
 ## 0.4.0
 
 * mean values are changed to median values;
