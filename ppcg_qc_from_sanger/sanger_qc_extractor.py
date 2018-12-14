@@ -537,12 +537,12 @@ class SangerQcMetricsExtractor(object):
         try:
             contamination_per_lane = []
             for rg_id in rg_ids:
-                contamination_per_lane.append(con_dict[sample_name]['by_readgroup'][rg_id]['contamination'])
+                contamination_per_lane.append(float(con_dict[sample_name]['by_readgroup'][rg_id]['contamination']))
         except Exception as exc:
             raise RuntimeError('can not find contamination value: %s' % str(exc))
 
         # the contaminations can be really small (eg: 0.00000001), thus not a good idea to use format_float
-        return ','.join([str(cpl) for cpl in contamination_per_lane]), median(contamination_per_lane)
+        return ','.join([str(cpl) for cpl in contamination_per_lane]), str(median(contamination_per_lane))
 
     def get_tumour_contamination(self):
         return self.get_contamination_from_file(self.t_rg_ids, self.extracted_files['contamination'][0], self.t_sample_name)
