@@ -2,7 +2,7 @@
 
 ## 0.4.1
 
-* corrected installation methon in README
+* corrected installation method in README
 * corrected version number in setup.py
 
 ## 0.4.0
