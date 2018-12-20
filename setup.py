@@ -9,7 +9,7 @@ config = {
     'url': 'https://github.com/cancerit/ppcg-qc-from-sanger',
     'download_url': '',
     'author_email': 'cgphelp@sanger.ac.uk',
-    'version': '0.4.1',
+    'version': '0.4.2',
     'python_requires': '>= 3.6',
     'setup_requires': ['pytest'],
     'install_requires': [],

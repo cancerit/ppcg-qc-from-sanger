@@ -1,5 +1,9 @@
 # Changes
 
+## 0.4.2
+
+* fixed a bug: sample_uuid_index variable is never assigned.
+
 ## 0.4.1
 
 * corrected installation method in README
