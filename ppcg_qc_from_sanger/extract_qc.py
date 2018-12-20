@@ -376,7 +376,7 @@ def get_sample_meta(meta_files) -> Tuple[Dict[str, dict], Dict[str, dict]]:
                 logger.warning('can not find Sample_ID column in input meta: %s', meta_file)
 
             try:
-                sample_id_index = lower_case_header.index('sample_uuid')
+                sample_uuid_index = lower_case_header.index('sample_uuid')
             except ValueError:
                 logger.warning('can not find Sample_UUID column in input meta: %s', meta_file)
 
@@ -396,7 +396,7 @@ def get_sample_meta(meta_files) -> Tuple[Dict[str, dict], Dict[str, dict]]:
                     sample_id_meta[sample_id] = valid_dict
                 if sample_uuid_index:
                     sample_uuid = line_split[sample_uuid_index]
-                    logger.debug('found metadata for sample id: %s, valid meta: \n%s', sample_uuid, json.dumps(valid_dict))
+                    logger.debug('found metadata for sample uuid: %s, valid meta: \n%s', sample_uuid, json.dumps(valid_dict))
                     if sample_uuid in sample_uuid_meta:
                         logger.critical('duplicated sample_uuid: %s is found in: %s', sample_uuid, meta_file)
                         sys.exit(1)
